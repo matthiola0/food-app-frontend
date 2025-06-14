@@ -12,9 +12,9 @@ const ImageItem = ({ src, alt }: { src: string; alt: string }) => (
     <Image 
       src={src} 
       alt={alt} 
-      layout="fill" 
-      objectFit="cover" 
-      className="rounded-md transition-transform duration-300 hover:scale-105"
+      fill 
+      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+      className="rounded-md transition-transform duration-300 hover:scale-105 object-cover"
     />
   </div>
 );

@@ -105,16 +105,29 @@ function AddRestaurantForm() {
 
 export default function AddRestaurantPage() {
   const apiKey = process.env.NEXT_PUBLIC_Maps_API_KEY;
-  if (!apiKey) return <p>Google Maps API 金鑰未設定</p>;
+  // 建立一個狀態來追蹤 API 是否已載入
+  const [isMapsApiLoaded, setMapsApiLoaded] = useState(false);
+
+  if (!apiKey) {
+    return <p className="text-center text-red-500 mt-10">Google Maps API 金鑰未設定</p>;
+  }
 
   return (
     <>
-      {/* 這裡手動載入包含 places 函式庫的腳本 */}
+      {/* 載入腳本，並在載入完成後更新狀態 */}
       <Script
         src={`https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`}
         strategy="afterInteractive"
+        onLoad={() => setMapsApiLoaded(true)}
+        async
       />
-      <AddRestaurantForm />
+      
+      {/* 只有在 API 載入完成後，才渲染表單元件 */}
+      {isMapsApiLoaded ? (
+        <AddRestaurantForm />
+      ) : (
+        <p className="text-center text-gray-500 mt-10">正在載入地圖資源...</p>
+      )}
     </>
   );
 }
