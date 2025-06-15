@@ -21,6 +21,10 @@ const NEARBY_RESTAURANTS_QUERY = gql`
 // 定義一個簡潔的地圖樣式
 const mapStyles: google.maps.MapTypeStyle[] = [
   { featureType: 'poi.business', stylers: [{ visibility: 'off' }] },
+  // { featureType: 'poi.attraction', stylers: [{ visibility: 'off' }] },
+  // { featureType: 'poi.park', stylers: [{ visibility: 'off' }] },
+  // { featureType: 'poi.school', stylers: [{ visibility: 'off' }] },
+  // { featureType: 'poi.sports_complex', stylers: [{ visibility: 'off' }] },
   { featureType: 'transit', elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
 ];
 
@@ -59,7 +63,7 @@ function MapView() {
 
   useEffect(() => {
     if (searchPosition) {
-      const geohashPrefix = ngeohash.encode(searchPosition.lat, searchPosition.lng).substring(0, 7);
+      const geohashPrefix = ngeohash.encode(searchPosition.lat, searchPosition.lng).substring(0, 6);
       getNearbyRestaurants({ variables: { geohashPrefix } });
     }
   }, [searchPosition, getNearbyRestaurants]);
@@ -88,6 +92,15 @@ function MapView() {
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 w-11/12 max-w-md">
             <LocationSearchBox onLocationSelect={(pos) => setSearchPosition(pos)} />
         </div>
+        <button 
+          onClick={() => setIsListOpen(!isListOpen)}
+          className="absolute top-20 left-4 z-20 bg-white p-2 rounded-full shadow-lg hover:bg-gray-100 transition-transform"
+          title="開合列表"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`w-6 h-6 transition-transform duration-300 ${isListOpen ? 'rotate-180' : ''}`}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+          </svg>
+        </button>
         <button onClick={handleBackToMyLocation} className="absolute bottom-10 right-4 z-20 bg-white p-3 rounded-full shadow-lg hover:bg-gray-100" title="回到我的位置">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-blue-600"><path d="M12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75z" /><path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 00-1.5 0v.093c-2.434.26-4.432 2.293-4.682 4.756a.75.75 0 00.743.837.75.75 0 00.84-.735A3.24 3.24 0 0112 8.25a3.25 3.25 0 013.25 3.25 3.24 3.24 0 01-.647 1.886.75.75 0 10-1.299.75a4.74 4.74 0 001.946-2.636.75.75 0 00-.84-.735.75.75 0 00-.743.837 3.24 3.24 0 01-4.682 2.56V15a.75.75 0 001.5 0v-.093a4.74 4.74 0 004.682-4.756A4.75 4.75 0 0012.75 6z" clipRule="evenodd" /></svg>
         </button>
@@ -102,7 +115,7 @@ function MapView() {
         </div>
         {/* 地圖 */}
         <div className="absolute inset-0 z-0">
-          <Map defaultCenter={defaultMapCenter} defaultZoom={14} mapId="food-map-5" gestureHandling={'greedy'} disableDefaultUI={true} styles={mapStyles}>
+          <Map defaultCenter={defaultMapCenter} defaultZoom={14} mapId="c9b70bd65e257bc5147c2a3c" gestureHandling={'greedy'} disableDefaultUI={true} styles={mapStyles}>
             <MapController position={searchPosition} />
             {searchPosition && <AdvancedMarker position={searchPosition} />}
             {sortedRestaurants.map((res: any) => (<AdvancedMarker key={res.restaurantId} position={{ lat: res.lat, lng: res.lng }} onClick={() => setSelectedRestaurant(res)} title={res.name} />))}
