@@ -4,20 +4,8 @@
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth'; // 1. 引入 Google 登入相關工具
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { auth } from '@/lib/firebaseClient';
-import { useMutation, gql } from '@apollo/client'; // 引入 useMutation 和 gql
-
-// 2. 定義我們在後端新增的 Mutation
-const ENSURE_USER_MUTATION = gql`
-  mutation EnsureUser {
-    ensureUser {
-      uid
-      email
-      displayName
-    }
-  }
-`;
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -26,18 +14,14 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  // 3. 建立 mutation 的執行函式
-  const [ensureUser] = useMutation(ENSURE_USER_MUTATION);
-
   const handleEmailSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
     try {
+      // 只需登入，不需要再呼叫 ensureUser
       await signInWithEmailAndPassword(auth, email, password);
-      // Email/密碼登入後，我們也應該呼叫 ensureUser，以防萬一
-      await ensureUser();
-      router.push('/');
+      router.push('/'); // 登入成功後導向首頁
     } catch (err: any) {
       setError('登入失敗，請檢查您的帳號或密碼。');
     } finally {
@@ -45,18 +29,14 @@ export default function LoginPage() {
     }
   };
 
-  // 4. 這是 Google 登入的核心邏輯
   const handleGoogleSignIn = async () => {
     setError('');
     setLoading(true);
     const provider = new GoogleAuthProvider();
     try {
-      // 跳出 Google 登入視窗
+      // 只需登入，不需要再呼叫 ensureUser
       await signInWithPopup(auth, provider);
-      // 登入成功後，呼叫後端 Mutation 來確保 Firestore 中有使用者資料
-      await ensureUser();
-      // 導向首頁
-      router.push('/');
+      router.push('/'); // 登入成功後導向首頁
     } catch (err: any) {
       setError('Google 登入失敗，請稍後再試。');
       console.error(err);
