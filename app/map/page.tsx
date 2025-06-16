@@ -21,10 +21,6 @@ const NEARBY_RESTAURANTS_QUERY = gql`
 // 定義一個簡潔的地圖樣式
 const mapStyles: google.maps.MapTypeStyle[] = [
   { featureType: 'poi.business', stylers: [{ visibility: 'off' }] },
-  // { featureType: 'poi.attraction', stylers: [{ visibility: 'off' }] },
-  // { featureType: 'poi.park', stylers: [{ visibility: 'off' }] },
-  // { featureType: 'poi.school', stylers: [{ visibility: 'off' }] },
-  // { featureType: 'poi.sports_complex', stylers: [{ visibility: 'off' }] },
   { featureType: 'transit', elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
 ];
 
@@ -47,6 +43,13 @@ function MapController({ position }: { position: { lat: number; lng: number } | 
   return null;
 }
 
+const RestaurantPin = () => (
+  <div className="w-8 h-8 rounded-full bg-orange-500 border-2 border-white shadow-md flex items-center justify-center">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-white">
+      <path d="M7.426 5.95A3.002 3.002 0 019.998 4a3.002 3.002 0 012.573 1.95 2.989 2.989 0 010 4.102,3.002 3.002 0 01-5.146 0 2.989 2.989 0 010-4.102zM3 10a3 3 0 013-3h2.989a3.001 3.001 0 012.016 5.253A3 3 0 0111 17a3 3 0 01-3 3H6a3 3 0 01-3-3v-4zm11 0a3 3 0 013-3h.01a3 3 0 013 3v4a3 3 0 01-3 3h-.01a3 3 0 01-3-3v-4z" />
+    </svg>
+  </div>
+);
 
 function MapView() {
   const { position: userGpsPosition, error: geoError } = useGeolocation();
@@ -118,7 +121,11 @@ function MapView() {
           <Map defaultCenter={defaultMapCenter} defaultZoom={14} mapId="c9b70bd65e257bc5147c2a3c" gestureHandling={'greedy'} disableDefaultUI={true} styles={mapStyles}>
             <MapController position={searchPosition} />
             {searchPosition && <AdvancedMarker position={searchPosition} />}
-            {sortedRestaurants.map((res: any) => (<AdvancedMarker key={res.restaurantId} position={{ lat: res.lat, lng: res.lng }} onClick={() => setSelectedRestaurant(res)} title={res.name} />))}
+            {sortedRestaurants.map((res: any) => (
+              <AdvancedMarker key={res.restaurantId} position={{ lat: res.lat, lng: res.lng }} onClick={() => setSelectedRestaurant(res)} title={res.name}>
+                <RestaurantPin />
+              </AdvancedMarker>
+            ))}
             {selectedRestaurant && (<InfoWindow position={{ lat: selectedRestaurant.lat, lng: selectedRestaurant.lng }} onCloseClick={() => setSelectedRestaurant(null)}><div><h3 className="font-bold">{selectedRestaurant.name}</h3>{!selectedRestaurant.custom && <Link href={`/restaurants/${selectedRestaurant.restaurantId}`} className="text-blue-500 hover:underline">查看詳情</Link>}</div></InfoWindow>)}
           </Map>
         </div>

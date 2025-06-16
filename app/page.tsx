@@ -1,10 +1,21 @@
-// app/page.tsx
 "use client";
 
 import { useState } from 'react';
 import { gql, useQuery } from '@apollo/client';
 import Link from 'next/link';
-import Image from 'next/image';
+import { useAuth } from '@/context/AuthContext';
+
+// --- GraphQL 定義 ---
+
+// 專門用來在本頁面獲取當前使用者的角色
+const GET_CURRENT_USER_ROLE = gql`
+  query GetCurrentUserRole {
+    ensureUser {
+      uid
+      role
+    }
+  }
+`;
 
 const GET_ALL_RESTAURANTS = gql`
   query GetAllRestaurants {
@@ -17,11 +28,24 @@ const GET_ALL_RESTAURANTS = gql`
 `;
 
 export default function HomePage() {
-  const { data, loading, error } = useQuery(GET_ALL_RESTAURANTS);
+  // 查詢所有餐廳
+  const { data: restaurantData, loading: restaurantsLoading, error: restaurantsError } = useQuery(GET_ALL_RESTAURANTS);
+  
+  // 從 AuthContext 取得基礎的登入狀態
+  const { user } = useAuth(); 
+  
+  // 只有在使用者登入後，才執行獲取角色的查詢
+  const { data: userData } = useQuery(GET_CURRENT_USER_ROLE, {
+    skip: !user, 
+  });
+
   const [searchTerm, setSearchTerm] = useState('');
 
+  // 根據角色查詢的結果，來決定是否為管理員
+  const isAdmin = userData?.ensureUser?.role === 'ADMIN';
+
   // 客戶端簡易搜尋邏輯
-  const filteredRestaurants = data?.restaurants.filter((restaurant: any) =>
+  const filteredRestaurants = restaurantData?.restaurants.filter((restaurant: any) =>
     restaurant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     restaurant.address.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -35,9 +59,12 @@ export default function HomePage() {
 
       {/* 功能按鈕區 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-8">
-        <Link href="/add-restaurant" className="block text-center bg-blue-500 text-white font-bold py-4 px-6 rounded-lg hover:bg-blue-600 transition-all text-lg">
-          ＋ 新增餐廳
-        </Link>
+        {
+          <Link href="/add-restaurant" className="block text-center bg-blue-500 text-white font-bold py-4 px-6 rounded-lg hover:bg-blue-600 transition-all text-lg">
+            ＋ 新增餐廳
+          </Link>
+        }
+        
         <Link href="/map" className="block text-center bg-green-500 text-white font-bold py-4 px-6 rounded-lg hover:bg-green-600 transition-all text-lg">
           🗺️ 尋找附近餐廳
         </Link>
@@ -55,8 +82,8 @@ export default function HomePage() {
       </div>
 
       {/* 餐廳列表 */}
-      {loading && <p className="text-center">讀取中...</p>}
-      {error && <p className="text-center text-red-500">讀取餐廳失敗: {error.message}</p>}
+      {restaurantsLoading && <p className="text-center">讀取中...</p>}
+      {restaurantsError && <p className="text-center text-red-500">讀取餐廳失敗: {restaurantsError.message}</p>}
       <div className="space-y-4">
         {filteredRestaurants && filteredRestaurants.map((restaurant: any) => (
           <Link href={`/restaurants/${restaurant.restaurantId}`} key={restaurant.restaurantId} className="block bg-white p-4 rounded-lg shadow-md hover:shadow-xl transition-shadow">

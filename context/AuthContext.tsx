@@ -1,49 +1,62 @@
-// context/AuthContext.tsx
+// context/AuthContext.tsx (最終穩定版)
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth } from '../lib/firebaseClient';
-import { ApolloProviderWrapper } from '@/lib/ApolloProviderWrapper';
+import { ApolloProvider, ApolloClient, createHttpLink, InMemoryCache } from '@apollo/client';
+import { setContext } from '@apollo/client/link/context';
 
-// 定義 Context 的內容
+// 建立一個在 App 生命週期中只會被建立一次的 Apollo Client
+const httpLink = createHttpLink({
+  uri: 'http://localhost:3000/graphql',
+});
+
+const authLink = setContext(async (_, { headers }) => {
+  // 在每次請求發出前，動態地從 Firebase 取得當前的 token
+  const token = auth.currentUser ? await auth.currentUser.getIdToken() : null;
+  return {
+    headers: {
+      ...headers,
+      authorization: token ? `Bearer ${token}` : '',
+    },
+  };
+});
+
+const client = new ApolloClient({
+  link: authLink.concat(httpLink),
+  cache: new InMemoryCache(),
+});
+
+
+
 interface AuthContextType {
   user: User | null;
-  loading: boolean;
 }
 
-// 建立 Context
-const AuthContext = createContext<AuthContextType>({ user: null, loading: true });
+const AuthContext = createContext<AuthContextType>({ user: null });
 
-// 建立一個 Provider 元件
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // onAuthStateChanged 是一個監聽器，當登入狀態改變時會觸發
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setLoading(false);
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
     });
-
-    // 當元件卸載時，取消監聽
     return () => unsubscribe();
   }, []);
 
-  const value = { user, loading };
+  const value = { user };
 
   return (
     <AuthContext.Provider value={value}>
-      {/* 我們需要重新設定 Apollo Client 來傳遞 token，所以把 Provider 包在這裡 */}
-      <ApolloProviderWrapper idToken={user ? user.getIdToken() : null}>
-        {!loading && children}
-      </ApolloProviderWrapper>
+      <ApolloProvider client={client}>
+        {children}
+      </ApolloProvider>
     </AuthContext.Provider>
   );
 }
 
-// 建立一個 custom hook，方便其他元件使用
 export const useAuth = () => {
   return useContext(AuthContext);
 };

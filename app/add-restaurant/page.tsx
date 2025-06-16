@@ -9,8 +9,8 @@ import { APIProvider } from '@vis.gl/react-google-maps';
 import Script from 'next/script';
 
 const CREATE_RESTAURANT = gql`
-  mutation CreateRestaurant($name: String!, $address: String!, $lat: Float!, $lng: Float!) {
-    createRestaurant(name: $name, address: $address, lat: $lat, lng: $lng)
+  mutation CreateRestaurant($name: String!, $address: String!, $lat: Float!, $lng: Float!, $info: String) {
+    createRestaurant(name: $name, address: $address, lat: $lat, lng: $lng, info: $info)
   }
 `;
 
@@ -19,6 +19,7 @@ function AddRestaurantForm() {
   const [address, setAddress] = useState('');
   const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
   const router = useRouter();
+  const [info, setInfo] = useState('');
 
   const [createRestaurant, { loading, error }] = useMutation(CREATE_RESTAURANT, {
     onCompleted: (data) => {
@@ -51,10 +52,18 @@ function AddRestaurantForm() {
   };
 
   const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    if (!coordinates) { alert('請從建議列表中選擇一個有效的地址'); return; }
-    createRestaurant({ variables: { name, address, lat: coordinates.lat, lng: coordinates.lng } });
-  };
+  e.preventDefault();
+  if (!coordinates) { alert('請從建議列表中選擇一個有效的地址'); return; }
+  createRestaurant({ 
+    variables: { 
+      name, 
+      address, 
+      lat: coordinates.lat, 
+      lng: coordinates.lng,
+      info // 將 info 加入到 variables 中
+    } 
+  });
+};
 
   return (
     <div className="container mx-auto max-w-lg p-4 mt-10">
@@ -84,7 +93,7 @@ function AddRestaurantForm() {
             required
           />
           {status === 'OK' && (
-            <ul className="absolute z-10 w-full bg-white border mt-1 rounded-md shadow-lg">
+            <ul className="absolute z-10 w-full bg-white border mt-1 rounded-md shadow-lg text-gray-700">
               {suggestions.map(({ place_id, description }) => (
                 <li key={place_id} onClick={() => handleSelect(description)} className="p-2 hover:bg-gray-100 cursor-pointer">
                   {description}
@@ -92,6 +101,18 @@ function AddRestaurantForm() {
               ))}
             </ul>
           )}
+        </div>
+        
+        <div>
+          <label htmlFor="info" className="block text-sm font-medium text-gray-700">餐廳詳細資訊 (選填)</label>
+          <textarea
+            id="info"
+            value={info}
+            onChange={(e) => setInfo(e.target.value)}
+            rows={4}
+            placeholder="例如：營業時間、特色介紹、注意事項等..."
+            className="mt-1 w-full px-3 py-2 border rounded-md text-gray-900 bg-white"
+          />
         </div>
 
         <button type="submit" disabled={loading} className="w-full bg-blue-500 text-white py-2 rounded-md disabled:bg-blue-300">
